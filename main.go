@@ -1,26 +1,39 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"io/ioutil"
+	"path/filepath"
+	"strings"
 
-	"github.com/robertkrimen/otto"
+	"github.com/spf13/afero"
+
+	"github.com/joshcarp/sysl-mermaid/mermaid"
 )
 
-func greet(name string) {
-	fmt.Printf("hello, %s!\n", name)
-}
-
 func main() {
-	vm := otto.New()
-
-	data, err := ioutil.ReadFile("mermaid.min.js")
-	if err != nil {
-		panic(err)
+	var output string
+	flag.StringVar(&output, "o", "", "Output file of the svg")
+	flag.Parse()
+	filename := flag.Arg(0)
+	if filename == "" {
+		fmt.Println("Error, no filename specified")
 	}
-	strData := string(data)
+	if output == "" {
+		output = strings.TrimSuffix(filename, filepath.Ext(filename)) + ".svg"
+	}
+	fmt.Println("iutfiuyifyf", output, filename)
+	fs := afero.NewOsFs()
+	file, err := afero.ReadFile(fs, filename)
+	if err != nil {
+		fmt.Println("Error reading input file")
+	}
+	result := mermaid.Execute(string(file))
 
-	this, err := vm.Run(strData)
+	outfile, err := fs.Create(output)
+	if err != nil {
+		fmt.Println("Error creating output file")
+	}
+	outfile.Write([]byte(result))
 
-	fmt.Println(this, err)
 }
