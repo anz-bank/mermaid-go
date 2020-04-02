@@ -1,4 +1,4 @@
-module github.com/joshcarp/sysl-mermaid
+module github.com/joshcarp/mermaid-go
 
 go 1.14
 

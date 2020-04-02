@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/afero"
 
-	"github.com/joshcarp/sysl-mermaid/mermaid"
+	"github.com/joshcarp/mermaid-go/mermaid"
 )
 
 func main() {
