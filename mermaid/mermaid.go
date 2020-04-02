@@ -15,32 +15,38 @@ import (
 )
 
 var flagPort = flag.Int("port", 8544, "port")
-var str string
 
-type svg struct {
-	content string
+type diagram struct {
+	html string
+	svg  string
 }
 
-func Execute(ctx context.Context) {
-	s := &svg{}
-	// run task list
-	err := chromedp.Run(ctx, s.browserTasks(fmt.Sprintf("http://localhost:%d", *flagPort)))
-	if err != nil {
+func Execute(mermaidCode ...string) string {
+	go Server(fmt.Sprintf(":%d", *flagPort), LoadTemplate(mermaidCode...))
+	ctx, cancel := chromedp.NewContext(context.Background())
+	defer cancel()
+	d := &diagram{}
+	if err := chromedp.Run(ctx, d.browserTasks(fmt.Sprintf("http://localhost:%d", *flagPort))); err != nil {
 		log.Fatal(err)
 	}
 
-	r := strings.NewReader(str)
+	r := strings.NewReader(d.html)
 	doc, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
 		panic(err)
 	}
+
 	doc.Find("#mermaid").Each(func(i int, s *goquery.Selection) {
-		inside_html, _ := s.Html() //underscore is an error
-		fmt.Printf("Review %d: %s\n", i, inside_html)
+		inside_html, err := s.Html()
+		if err != nil {
+			panic(err)
+		}
+		d.svg = inside_html
 	})
+	return d.svg
 }
 
-func (s *svg) browserTasks(host string) chromedp.Tasks {
+func (s *diagram) browserTasks(host string) chromedp.Tasks {
 	return chromedp.Tasks{
 		chromedp.Navigate(host),
 		chromedp.ActionFunc(func(ctx context.Context) error {
@@ -58,7 +64,7 @@ func (s *svg) browserTasks(host string) chromedp.Tasks {
 			if err != nil {
 				return err
 			}
-			str, err = dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx)
+			s.html, err = dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx)
 			return err
 		}),
 	}

@@ -22,7 +22,6 @@ func main() {
 	if output == "" {
 		output = strings.TrimSuffix(filename, filepath.Ext(filename)) + ".svg"
 	}
-	fmt.Println("iutfiuyifyf", output, filename)
 	fs := afero.NewOsFs()
 	file, err := afero.ReadFile(fs, filename)
 	if err != nil {
