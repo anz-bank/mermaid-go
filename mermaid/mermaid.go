@@ -3,7 +3,6 @@ package mermaid
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"html/template"
 	"io"
 	"net/http"
@@ -14,12 +13,8 @@ import (
 )
 
 // Execute evaluates mermaid code and returns svg string slices.
-func Execute(mermaidCode ...string) []string {
-	svgs := make([]string, 0, len(mermaidCode))
-	for _, m := range mermaidCode {
-		svgs = append(svgs, EvaluateAndSelectHTML(LoadTemplate(m), "svg"))
-	}
-	return svgs
+func Execute(mermaidCode string) string {
+	return EvaluateAndSelectHTML(LoadTemplate(mermaidCode), "svg")
 }
 
 func writeHTML(content string) http.Handler {
@@ -43,7 +38,6 @@ func EvaluateAndSelectHTML(rawHTML, selector string) string {
 	); err != nil {
 		panic(err)
 	}
-	fmt.Println(processedHTML)
 	return processedHTML
 }
 
@@ -52,13 +46,13 @@ const indexHTML = `<html>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@8.4.0/dist/mermaid.min.js"></script>
 <script>mermaid.initialize({startOnLoad:true});</script>
 <div class="mermaid">
-{{range $file := .}}{{.}}{{end}}
+{{.}}
 </div>
 </body>
 </html>`
 
 // Load template returns a mermaid html page with the input mermaid code embedded.
-func LoadTemplate(file ...string) string {
+func LoadTemplate(file string) string {
 	newTemplate, err := template.New("").Parse(indexHTML)
 	if err != nil {
 		panic(err)
