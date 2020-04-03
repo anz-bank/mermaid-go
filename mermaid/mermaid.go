@@ -13,8 +13,13 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-func Execute(mermaidCode ...string) string {
-	return EvaluateAndSelectHTML(LoadTemplate(mermaidCode...), "svg")
+// Execute evaluates mermaid code and returns svg string slices.
+func Execute(mermaidCode ...string) []string {
+	svgs := make([]string, 0, len(mermaidCode))
+	for _, m := range mermaidCode {
+		svgs = append(svgs, EvaluateAndSelectHTML(LoadTemplate(m), "svg"))
+	}
+	return svgs
 }
 
 func writeHTML(content string) http.Handler {
@@ -24,6 +29,7 @@ func writeHTML(content string) http.Handler {
 	})
 }
 
+// Execute evaluates raw html (with javascript embedded) and returns the processed HTML.
 func EvaluateAndSelectHTML(rawHTML, selector string) string {
 	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
@@ -51,6 +57,7 @@ const indexHTML = `<html>
 </body>
 </html>`
 
+// Load template returns a mermaid html page with the input mermaid code embedded.
 func LoadTemplate(file ...string) string {
 	newTemplate, err := template.New("").Parse(indexHTML)
 	if err != nil {
