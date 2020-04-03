@@ -4,32 +4,45 @@ import (
 	"bytes"
 	"context"
 	"html/template"
-	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
+
+	"github.com/go-chi/chi"
+	"github.com/markbates/pkger"
 
 	"github.com/chromedp/chromedp"
 )
+
+const mermaidJS = "/resources/mermaid.min.js"
+
+const indexHTML = `<html>
+<body>
+<script src="mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true});</script>
+<div class="mermaid">
+{{.}}
+</div>
+</body>
+</html>`
 
 // Execute evaluates mermaid code and returns svg string slices.
 func Execute(mermaidCode string) string {
 	return EvaluateAndSelectHTML(LoadTemplate(mermaidCode), "svg")
 }
 
-func writeHTML(content string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
-		io.WriteString(w, strings.TrimSpace(content))
-	})
-}
-
 // Execute evaluates raw html (with javascript embedded) and returns the processed HTML.
 func EvaluateAndSelectHTML(rawHTML, selector string) string {
 	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
+	r := chi.NewRouter()
 
-	ts := httptest.NewServer(writeHTML(rawHTML))
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(rawHTML))
+	})
+	r.Get("/mermaid.min.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Write(OpenFile(mermaidJS))
+	})
+	ts := httptest.NewServer(r)
 	defer ts.Close()
 	var processedHTML string
 	if err := chromedp.Run(ctx,
@@ -41,24 +54,28 @@ func EvaluateAndSelectHTML(rawHTML, selector string) string {
 	return processedHTML
 }
 
-const indexHTML = `<html>
-<body>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@8.4.0/dist/mermaid.min.js"></script>
-<script>mermaid.initialize({startOnLoad:true});</script>
-<div class="mermaid">
-{{.}}
-</div>
-</body>
-</html>`
+// OpenFile opens a statically encoded file from pkger.
+func OpenFile(filename string) []byte {
+	scriptFile, err := pkger.Open(filename)
+	if err != nil {
+		panic(err)
+	}
+	scriptBytes := make([]byte, 1113944)
+	n, err := scriptFile.Read(scriptBytes)
+	if err != nil {
+		panic(err)
+	}
+	return scriptBytes[0:n]
+}
 
 // Load template returns a mermaid html page with the input mermaid code embedded.
-func LoadTemplate(file string) string {
+func LoadTemplate(mermaidSource string) string {
 	newTemplate, err := template.New("").Parse(indexHTML)
 	if err != nil {
 		panic(err)
 	}
 	var buf bytes.Buffer
-	if err := newTemplate.Execute(&buf, file); err != nil {
+	if err := newTemplate.Execute(&buf, mermaidSource); err != nil {
 		panic(err)
 	}
 	return buf.String()
