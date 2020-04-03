@@ -1,71 +1,64 @@
 package mermaid
 
 import (
+	"bytes"
 	"context"
-	"flag"
 	"fmt"
-	"log"
+	"html/template"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 
-	"github.com/PuerkitoBio/goquery"
-
-	"github.com/chromedp/cdproto/dom"
-	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
 )
 
-var flagPort = flag.Int("port", 8544, "port")
-
-type diagram struct {
-	html string
-	svg  string
+func Execute(mermaidCode ...string) string {
+	return EvaluateAndSelectHTML(LoadTemplate(mermaidCode...), "svg")
 }
 
-func Execute(mermaidCode ...string) string {
-	go Server(fmt.Sprintf(":%d", *flagPort), LoadTemplate(mermaidCode...))
+func writeHTML(content string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		io.WriteString(w, strings.TrimSpace(content))
+	})
+}
+
+func EvaluateAndSelectHTML(rawHTML, selector string) string {
 	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
-	d := &diagram{}
-	if err := chromedp.Run(ctx, d.browserTasks(fmt.Sprintf("http://localhost:%d", *flagPort))); err != nil {
-		log.Fatal(err)
-	}
 
-	r := strings.NewReader(d.html)
-	doc, err := goquery.NewDocumentFromReader(r)
+	ts := httptest.NewServer(writeHTML(rawHTML))
+	defer ts.Close()
+	var processedHTML string
+	if err := chromedp.Run(ctx,
+		chromedp.Navigate(ts.URL),
+		chromedp.OuterHTML(selector, &processedHTML),
+	); err != nil {
+		panic(err)
+	}
+	fmt.Println(processedHTML)
+	return processedHTML
+}
+
+const indexHTML = `<html>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@8.4.0/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true});</script>
+<div class="mermaid">
+{{range $file := .}}{{.}}{{end}}
+</div>
+</body>
+</html>`
+
+func LoadTemplate(file ...string) string {
+	newTemplate, err := template.New("").Parse(indexHTML)
 	if err != nil {
 		panic(err)
 	}
-
-	doc.Find("#mermaid").Each(func(i int, s *goquery.Selection) {
-		inside_html, err := s.Html()
-		if err != nil {
-			panic(err)
-		}
-		d.svg = inside_html
-	})
-	return d.svg
-}
-
-func (s *diagram) browserTasks(host string) chromedp.Tasks {
-	return chromedp.Tasks{
-		chromedp.Navigate(host),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			_, exp, err := runtime.Evaluate("").Do(ctx)
-			if err != nil {
-				return err
-			}
-			if exp != nil {
-				return exp
-			}
-			return nil
-		}),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			node, err := dom.GetDocument().Do(ctx)
-			if err != nil {
-				return err
-			}
-			s.html, err = dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx)
-			return err
-		}),
+	var buf bytes.Buffer
+	if err := newTemplate.Execute(&buf, file); err != nil {
+		panic(err)
 	}
+	return buf.String()
 }
