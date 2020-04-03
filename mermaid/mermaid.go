@@ -3,17 +3,15 @@ package mermaid
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
 
 	"github.com/go-chi/chi"
-	"github.com/markbates/pkger"
 
 	"github.com/chromedp/chromedp"
 )
-
-const mermaidJS = "github.com/joshcarp/mermaid-go:/resources/mermaid.min.js"
 
 const indexHTML = `<html>
 <body>
@@ -29,18 +27,25 @@ const indexHTML = `<html>
 func Execute(mermaidCode string) string {
 	return EvaluateAndSelectHTML(LoadTemplate(mermaidCode), "svg")
 }
+func Decode64(src []byte) []byte {
+	decoded := make([]byte, 2176000)
+	n, err := base64.StdEncoding.Decode(decoded, src)
+	if err != nil {
+		panic(err)
+	}
+	return decoded[:n]
+}
 
 // Execute evaluates raw html (with javascript embedded) and returns the processed HTML.
 func EvaluateAndSelectHTML(rawHTML, selector string) string {
 	ctx, cancel := chromedp.NewContext(context.Background())
 	defer cancel()
 	r := chi.NewRouter()
-
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(rawHTML))
 	})
 	r.Get("/mermaid.min.js", func(w http.ResponseWriter, r *http.Request) {
-		w.Write(OpenFile(mermaidJS))
+		w.Write((Decode64([]byte(mermaidjs64))))
 	})
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -52,21 +57,6 @@ func EvaluateAndSelectHTML(rawHTML, selector string) string {
 		panic(err)
 	}
 	return processedHTML
-}
-
-// OpenFile opens a statically encoded file from pkger.
-func OpenFile(filename string) []byte {
-	pkger.Include(filename)
-	scriptFile, err := pkger.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	scriptBytes := make([]byte, 1113944)
-	n, err := scriptFile.Read(scriptBytes)
-	if err != nil {
-		panic(err)
-	}
-	return scriptBytes[0:n]
 }
 
 // Load template returns a mermaid html page with the input mermaid code embedded.
