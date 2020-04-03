@@ -20,9 +20,26 @@ See [demo](demo)
 
 
 ```
+package main
+
+import (
+	"io/ioutil"
+
+	"github.com/joshcarp/mermaid-go/mermaid"
+)
+
+func main() {
+	str := `
 graph TD;
-    A-->B;
-    A-->C;
-    B-->D;
-    C-->D;
+A-->B;
+A-->C;
+B-->D;
+C-->D;
+	`
+	svg := mermaid.Execute(str)
+	if err := ioutil.WriteFile("mermaid.svg", []byte(svg), 0644); err != nil {
+		panic(err)
+	}
+}
+
 ```
