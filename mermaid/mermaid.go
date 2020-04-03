@@ -56,6 +56,7 @@ func EvaluateAndSelectHTML(rawHTML, selector string) string {
 
 // OpenFile opens a statically encoded file from pkger.
 func OpenFile(filename string) []byte {
+	pkger.Include(filename)
 	scriptFile, err := pkger.Open(filename)
 	if err != nil {
 		panic(err)
