@@ -13,7 +13,7 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-const mermaidJS = "/resources/mermaid.min.js"
+const mermaidJS = "github.com/joshcarp/mermaid-go:/resources/mermaid.min.js"
 
 const indexHTML = `<html>
 <body>
