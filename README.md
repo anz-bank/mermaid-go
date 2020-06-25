@@ -1,8 +1,8 @@
 # mermaid-go
 
-mermaid-js executable written in go
+[mermaid-js](https://github.com/mermaid-js/mermaid) executable written in Go.
 
-uses [chromedp](https://github.com/chromedp/chromedp) to run mermaid js. 
+Uses [chromedp](https://github.com/chromedp/chromedp) to run mermaid js.
 
 ## Use
 
