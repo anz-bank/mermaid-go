@@ -23,5 +23,8 @@ func TestY(t *testing.T) {
 	if err != nil {
 		log.Fatal("Error: creating output file")
 	}
-	outfile.Write([]byte(result))
+	_, err = outfile.Write([]byte(result))
+	if err != nil {
+		log.Fatal("Error: saving output file")
+	}
 }
