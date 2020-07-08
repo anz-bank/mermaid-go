@@ -1,4 +1,4 @@
-module github.com/joshcarp/mermaid-go
+module github.com/anz-bank/mermaid-go
 
 go 1.14
 

@@ -4,7 +4,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/joshcarp/mermaid-go/mermaid"
+	"github.com/anz-bank/mermaid-go/mermaid"
 	"github.com/spf13/afero"
 )
 

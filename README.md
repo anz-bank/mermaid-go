@@ -8,7 +8,7 @@ Uses [chromedp](https://github.com/chromedp/chromedp) to run mermaid js.
 
 ### CLI 
 #### Installation
-`go get -u github.com/joshcarp/mermaid-go`
+`go get -u github.com/anz-bank/mermaid-go`
 #### Execute
 `mermaid-go <input.mmdc> -o <output.svg>`
 
@@ -16,7 +16,7 @@ See [demo](demo)
 
 ### As a go package
 
-`go get -u github.com/joshcarp/mermaid-go/mermaid`
+`go get -u github.com/anz-bank/mermaid-go/mermaid`
 
 
 ```
@@ -25,7 +25,7 @@ package main
 import (
 	"io/ioutil"
 
-	"github.com/joshcarp/mermaid-go/mermaid"
+	"github.com/anz-bank/mermaid-go/mermaid"
 )
 
 func main() {
