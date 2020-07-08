@@ -33,6 +33,8 @@ func main() {
 	if err != nil {
 		log.Fatal("Error: creating output file")
 	}
-	outfile.Write([]byte(result))
-
+	_, err = outfile.Write([]byte(result))
+	if err != nil {
+		log.Fatal("Error: writing output file")
+	}
 }
