@@ -36,7 +36,8 @@ A-->C;
 B-->D;
 C-->D;
 	`
-	svg := mermaid.Execute(str)
+	g := mermaid.Init()
+	svg := g.Execute(str)
 	if err := ioutil.WriteFile("mermaid.svg", []byte(svg), 0644); err != nil {
 		panic(err)
 	}
