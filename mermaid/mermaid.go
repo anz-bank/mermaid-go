@@ -23,23 +23,35 @@ const indexHTML = `<html>
 </body>
 </html>`
 
-// Execute evaluates mermaid code and returns svg string slices.
-func Execute(mermaidCode string) string {
-	return EvaluateAndSelectHTML(LoadTemplate(mermaidCode), "svg")
+type Generator struct {
+	ctx    context.Context
+	cancel context.CancelFunc
 }
-func Decode64(src []byte) []byte {
-	decoded := make([]byte, 2176000)
-	n, err := base64.StdEncoding.Decode(decoded, src)
-	if err != nil {
+
+// // Init returns a new Generator instance which sets up a chrome browser instance to be used by all subsequent calls
+func Init() *Generator {
+	ctx, cancel := chromedp.NewContext(context.Background())
+	g := &Generator{}
+	g.ctx = ctx
+	g.cancel = cancel
+	if err := chromedp.Run(ctx); err != nil {
 		panic(err)
 	}
-	return decoded[:n]
+	return g
+}
+
+// Close cancels the root context and closes the chrome browser instance created by chromedp
+func (g *Generator) Close() {
+	g.cancel()
+}
+
+// Execute evaluates mermaid code and returns svg string slices.
+func (g *Generator) Execute(mermaidCode string) string {
+	return g.EvaluateAndSelectHTML(LoadTemplate(mermaidCode), "svg")
 }
 
 // Execute evaluates raw html (with javascript embedded) and returns the processed HTML.
-func EvaluateAndSelectHTML(rawHTML, selector string) string {
-	ctx, cancel := chromedp.NewContext(context.Background())
-	defer cancel()
+func (g *Generator) EvaluateAndSelectHTML(rawHTML, selector string) string {
 	r := chi.NewRouter()
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte(rawHTML))
@@ -56,6 +68,9 @@ func EvaluateAndSelectHTML(rawHTML, selector string) string {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 	var processedHTML string
+	ctx, cancel := chromedp.NewContext(g.ctx)
+	defer cancel()
+
 	if err := chromedp.Run(ctx,
 		chromedp.Navigate(ts.URL),
 		chromedp.OuterHTML(selector, &processedHTML),
@@ -76,4 +91,13 @@ func LoadTemplate(mermaidSource string) string {
 		panic(err)
 	}
 	return buf.String()
+}
+
+func Decode64(src []byte) []byte {
+	decoded := make([]byte, 2176000)
+	n, err := base64.StdEncoding.Decode(decoded, src)
+	if err != nil {
+		panic(err)
+	}
+	return decoded[:n]
 }
