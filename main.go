@@ -27,7 +27,8 @@ func main() {
 	if err != nil {
 		log.Fatal("Error: reading input file")
 	}
-	result := mermaid.Execute(string(file))
+	g := mermaid.Init()
+	result := g.Execute(string(file))
 
 	outfile, err := fs.Create(output)
 	if err != nil {

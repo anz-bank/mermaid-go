@@ -77,7 +77,9 @@ Server_Request <-- Server_Response
 
 func TestExecuteClassDiagram(t *testing.T) {
 	t.Parallel()
-	svgResult := Execute(sampleClassDiagram)
+	g := Init()
+	defer g.Close()
+	svgResult := g.Execute(sampleClassDiagram)
 	assert.NoError(t, isValidMermaidSVG(svgResult))
 	err := ioutil.WriteFile("./test/sampleClassDiagram.svg", []byte(svgResult), 0644)
 	assert.NoError(t, err)
@@ -85,15 +87,20 @@ func TestExecuteClassDiagram(t *testing.T) {
 
 func TestExecuteFlowChart(t *testing.T) {
 	t.Parallel()
-	svgResult := Execute(sampleFlowChart)
+	g := Init()
+	defer g.Close()
+	svgResult := g.Execute(sampleFlowChart)
 	assert.NoError(t, isValidMermaidSVG(svgResult))
 	err := ioutil.WriteFile("./test/sampleFlowChart.svg", []byte(svgResult), 0644)
 	assert.NoError(t, err)
+
 }
 
 func TestExecuteSequenceDiagram(t *testing.T) {
 	t.Parallel()
-	svgResult := Execute(sampleSequenceDiagram)
+	g := Init()
+	defer g.Close()
+	svgResult := g.Execute(sampleSequenceDiagram)
 	assert.NoError(t, isValidMermaidSVG(svgResult))
 	err := ioutil.WriteFile("./test/sampleSequenceDiagram.svg", []byte(svgResult), 0644)
 	assert.NoError(t, err)
@@ -101,7 +108,9 @@ func TestExecuteSequenceDiagram(t *testing.T) {
 
 func TestExecuteErDiagram(t *testing.T) {
 	t.Parallel()
-	svgResult := Execute(sampleErDiagram)
+	g := Init()
+	defer g.Close()
+	svgResult := g.Execute(sampleErDiagram)
 	assert.NoError(t, isValidMermaidSVG(svgResult))
 	err := ioutil.WriteFile("./test/sampleErDiagram.svg", []byte(svgResult), 0644)
 	assert.NoError(t, err)
@@ -109,7 +118,9 @@ func TestExecuteErDiagram(t *testing.T) {
 
 func TestExecuteClassDiagramWithList(t *testing.T) {
 	t.Parallel()
-	svgResult := Execute(classDiagramWithList)
+	g := Init()
+	defer g.Close()
+	svgResult := g.Execute(classDiagramWithList)
 	assert.NoError(t, isValidMermaidSVG(svgResult))
 	err := ioutil.WriteFile("./test/classDiagramWithList.svg", []byte(svgResult), 0644)
 	assert.NoError(t, err)
